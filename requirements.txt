@@ -1,8 +1,8 @@
 fastapi
 uvicorn
 pandas
-scikit-learn
 lightgbm
-mlflow
-joblib
-python-multipart
+mlflow==2.10.2
+numpy==1.26.4
+packaging==23.2
+pyarrow==15.0.2

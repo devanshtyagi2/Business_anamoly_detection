@@ -1,14 +1,18 @@
 import pandas as pd
 import mlflow.pyfunc
+import os
 
-# Load model from MLflow registry
-MODEL_URI = "mlruns/538616375265912523/8c496f674292452587f4b4df835a8b09/artifacts/model"
+# IMPORTANT — model must exist inside container
+MODEL_URI = "./mlruns/538616375265912523/8c496f674292452587f4b4df835a8b09/artifacts/model"
 
+model = None
 
-model = mlflow.pyfunc.load_model(MODEL_URI)
-print("✅ Loaded model")
+try:
+    model = mlflow.pyfunc.load_model(MODEL_URI)
+    print("✅ Loaded model")
+except Exception as e:
+    print("❌ Model load failed:", e)
 
-# IMPORTANT: must match training FEATURES EXACTLY
 FEATURES = [
     "TransactionAmt",
     "card_tx_count",
@@ -17,24 +21,21 @@ FEATURES = [
     "anomaly_score",
 ]
 
-
 def predict(payload: dict):
 
-    # Build dataframe in correct order
+    global model
+
+    if model is None:
+        return {"error": "Model not loaded"}
+
     df = pd.DataFrame([[payload[f] for f in FEATURES]], columns=FEATURES)
 
-    # Get model output
     preds = model.predict(df)
 
-    # ---- SAFE PROBABILITY EXTRACTION ----
-    # If model returns probability array
+    # probability handling
     fraud_prob = float(preds[0][1]) if len(preds.shape) > 1 else float(preds[0])
-
-# Cap probability slightly (production style)
     fraud_prob = min(max(fraud_prob, 0.001), 0.999)
 
-
-    # ---- ALERT RULES ----
     if fraud_prob > 0.85:
         tier = "HIGH"
         action = "Block transaction"
