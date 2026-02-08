@@ -3,7 +3,7 @@ import mlflow.pyfunc
 import os
 
 # IMPORTANT — model must exist inside container
-MODEL_URI = "./mlruns/538616375265912523/8c496f674292452587f4b4df835a8b09/artifacts/model"
+MODEL_URI = "models/fraud_model"
 
 model = None
 
