@@ -2,10 +2,10 @@ import pandas as pd
 import mlflow.pyfunc
 import os
 
-# IMPORTANT — model must exist inside container
 MODEL_URI = "models/fraud_model"
 
-model = None
+# ---------- LOAD MODEL ----------
+model = None   # IMPORTANT
 
 try:
     model = mlflow.pyfunc.load_model(MODEL_URI)
@@ -32,7 +32,6 @@ def predict(payload: dict):
 
     preds = model.predict(df)
 
-    # probability handling
     fraud_prob = float(preds[0][1]) if len(preds.shape) > 1 else float(preds[0])
     fraud_prob = min(max(fraud_prob, 0.001), 0.999)
 
