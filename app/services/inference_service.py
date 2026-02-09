@@ -1,16 +1,13 @@
 import pandas as pd
 import mlflow.pyfunc
-import os
 
 MODEL_URI = "models/fraud_model"
 
-# ---------- LOAD MODEL ----------
-model = None   # IMPORTANT
-
 try:
     model = mlflow.pyfunc.load_model(MODEL_URI)
-    print("✅ Loaded model")
+    print("✅ Model loaded")
 except Exception as e:
+    model = None
     print("❌ Model load failed:", e)
 
 FEATURES = [
@@ -20,7 +17,6 @@ FEATURES = [
     "amt_over_card_mean",
     "anomaly_score",
 ]
-
 def predict(payload: dict):
 
     global model
@@ -30,9 +26,15 @@ def predict(payload: dict):
 
     df = pd.DataFrame([[payload[f] for f in FEATURES]], columns=FEATURES)
 
+    # MLflow pyfunc returns predictions using predict()
     preds = model.predict(df)
 
-    fraud_prob = float(preds[0][1]) if len(preds.shape) > 1 else float(preds[0])
+    # handle output safely
+    if isinstance(preds[0], (list, tuple)):
+        fraud_prob = float(preds[0][1])
+    else:
+        fraud_prob = float(preds[0])
+
     fraud_prob = min(max(fraud_prob, 0.001), 0.999)
 
     if fraud_prob > 0.85:
