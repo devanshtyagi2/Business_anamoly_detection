@@ -27,15 +27,16 @@ def predict(payload: dict):
     df = pd.DataFrame([[payload[f] for f in FEATURES]], columns=FEATURES)
 
     # MLflow pyfunc returns predictions using predict()
+    
     preds = model.predict(df)
 
-    # handle output safely
-    if isinstance(preds[0], (list, tuple)):
+    # If model returns probability array
+    if hasattr(preds[0], "__len__"):
         fraud_prob = float(preds[0][1])
     else:
+        # if model returns class label only
         fraud_prob = float(preds[0])
 
-    fraud_prob = min(max(fraud_prob, 0.001), 0.999)
 
     if fraud_prob > 0.85:
         tier = "HIGH"
